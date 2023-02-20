@@ -2,8 +2,14 @@ package org.clin.panels;
 
 import java.io.IOException;
 
-public class Main {
+@Deprecated
+public class Manual {
 
+  /*
+    This is the legacy way to build panels.tsv file
+    the code remains here to keep trace of how it worked
+    Import.java should be used with Airflow instead.
+   */
   public static void main(String[]args) throws Exception {
     generate20230203();
     generate20230214();

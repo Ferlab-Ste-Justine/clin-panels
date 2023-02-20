@@ -1,15 +1,21 @@
 # clin-panels
 
-Quick tool to compute the panels file while insuring the integrity of symbol/panels unicity.
+Quick tool to compute the panels file while insuring the integrity of symbol/panels unicity. It has two modes:
 
-## Deploy
+- **import** will load an Excel file from S3 and generate the panels file from it. Can be used from *airflow*
+- **manual (deprecated)** where the user writes how to build the panels file from inputs 
 
-`deploy.sh` can be used to deploy on S3 the result file ex:
+
+## Import (from Airflow)
+
+## Manual (deprecated)
+
+Update the `Main.java` main method with the logic you want to implement and then use `deploy.sh` to deploy on S3 the result file ex:
 
 ```shell
 sh ./deploy.sh panels_20230203.tsv [qa|staging|prod]
 ```
-Second arg **is optional** and `qa` by default
+Second arg **is optional** and is `qa` by default
 
 The logic of the `deploy` script is to copy the panel file itself, in order to keep an history of changes, and another copy named `panels.tsv` which is the one used by the ETLs.
 

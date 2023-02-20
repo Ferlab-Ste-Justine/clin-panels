@@ -2,7 +2,6 @@ package org.clin.panels;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
