@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 public class Parser {
 
@@ -22,7 +23,12 @@ public class Parser {
   }
 
   public static Model parse(String path) throws IOException {
-    return new Model(parse(TSV, path));
+    final Model model = new Model();
+    final CSVParser parser = parse(TSV, path);
+    parser.stream().iterator().forEachRemaining((r) -> {
+      model.add(r.get("symbol"), r.get("panels"), r.get("version"));
+    });
+    return model;
   }
 
   public static void write(Model model, String path) throws IOException {
