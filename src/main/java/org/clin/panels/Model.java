@@ -20,12 +20,12 @@ public class Model {
     symbols.get(symbol).addVersions(versions);
   }
 
-  public List<String> getDistinctPanels() {
-    return symbols.values().stream().flatMap((panel) -> panel.panels.stream()).collect(Collectors.toList());
+  public Set<String> getDistinctPanels() {
+    return symbols.values().stream().flatMap((panel) -> panel.panels.stream()).collect(Collectors.toSet());
   }
 
-  public List<String> getDistinctVersions() {
-    return symbols.values().stream().flatMap((panel) -> panel.versions.stream()).collect(Collectors.toList());
+  public Set<String> getDistinctVersions() {
+    return symbols.values().stream().flatMap((panel) -> panel.versions.stream()).collect(Collectors.toSet());
   }
 
   @Data

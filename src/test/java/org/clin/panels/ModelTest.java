@@ -52,8 +52,8 @@ class ModelTest {
   void shouldIgnoreEmptyPanels() {
     var model = new Model();
     model.add("s1", ",", "");
-    assertEquals(List.of(), model.getDistinctPanels());
-    assertEquals(List.of(), model.getDistinctVersions());
+    assertEquals(Set.of(), model.getDistinctPanels());
+    assertEquals(Set.of(), model.getDistinctVersions());
   }
 
   @Test
@@ -68,8 +68,8 @@ class ModelTest {
   void shouldBeRobust() {
     var model = new Model();
     model.add("s1", null, null);
-    assertEquals(List.of(), model.getDistinctPanels());
-    assertEquals(List.of(), model.getDistinctVersions());
+    assertEquals(Set.of(), model.getDistinctPanels());
+    assertEquals(Set.of(), model.getDistinctVersions());
   }
 
 }

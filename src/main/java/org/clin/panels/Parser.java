@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 
 public class Parser {
 
@@ -32,13 +31,19 @@ public class Parser {
   }
 
   public static void write(Model model, String path) throws IOException {
-    var buf = Files.newBufferedWriter(Paths.get(path), StandardCharsets.UTF_8);
-    buf.write(String.join("\t", model.getHeaders()));
-    buf.write("\n");
+    try (var buf = Files.newBufferedWriter(Paths.get(path), StandardCharsets.UTF_8)) {
+      buf.write(toTSV(model));
+    }
+  }
+
+  public static String toTSV(Model model) {
+    final StringBuilder builder = new StringBuilder();
+    builder.append(String.join("\t", model.getHeaders()));
+    builder.append("\n");
     for (String symbol: model.getSymbols().keySet()){
       var panel = model.getSymbols().get(symbol);
-      buf.write(String.format("%s\t%s\t%s\n", symbol, String.join(",", panel.getPanels()),String.join(",", panel.getVersions())));
+      builder.append(String.format("%s\t%s\t%s\n", symbol, String.join(",", panel.getPanels()),String.join(",", panel.getVersions())));
     }
-    buf.close();
+    return builder.toString();
   }
 }

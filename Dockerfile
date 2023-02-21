@@ -19,6 +19,7 @@ RUN $JAVA_HOME/bin/jdeps \
     --class-path="./unzip/BOOT-INF/lib/*" \
     --module-path="./unzip/BOOT-INF/lib/*" \
     ./app.jar > modules.info
+RUN cat modules.info
 # build the custom JRE from modules list
 RUN apk add --no-cache binutils
 RUN $JAVA_HOME/bin/jlink \
