@@ -1,8 +1,7 @@
 package org.clin.panels;
 
 import lombok.Data;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -10,41 +9,44 @@ import java.util.stream.Collectors;
 @Data
 public class Model {
 
-  private List<String> headers;
-  private Map<String, Panel> symbols;
+  public static final String ITEMS_SEPARATOR = ",";
 
-  public Model(CSVParser parser) {
-    this.headers = parser.getHeaderNames();
-    this.symbols = new TreeMap<>();
-    parser.stream().iterator().forEachRemaining((r) -> {
-      symbols.put(r.get("symbol"), new Panel(r));
-    });
-  }
+  private final List<String> headers = List.of("symbol", "panels", "version");
+  private final Map<String, Panel> symbols = new TreeMap<>();
 
-  public void add(String symbol, String panel, String version) {
-    symbols.computeIfAbsent(symbol,f -> new Panel());
-    symbols.get(symbol).panels.add(panel);
-    symbols.get(symbol).versions.add(version);
+  public void add(String symbol, String panels, String versions) {
+    symbols.computeIfAbsent(symbol, f -> new Panel());
+    symbols.get(symbol).addPanels(panels);
+    symbols.get(symbol).addVersions(versions);
   }
 
   public Set<String> getDistinctPanels() {
     return symbols.values().stream().flatMap((panel) -> panel.panels.stream()).collect(Collectors.toSet());
   }
 
+  public Set<String> getDistinctVersions() {
+    return symbols.values().stream().flatMap((panel) -> panel.versions.stream()).collect(Collectors.toSet());
+  }
+
   @Data
   public static class Panel {
 
-    private Set<String> panels;
-    private Set<String> versions;
+    private final Set<String> panels = new TreeSet<>();
+    private final Set<String> versions = new TreeSet<>();
 
-    public Panel() {
-      this.panels = new TreeSet<>();
-      this.versions = new TreeSet<>();
+    public void addPanels(String panels) {
+      this.panels.addAll(toList(panels));
     }
 
-    public Panel(CSVRecord record) {
-      this.panels = new TreeSet<>(Arrays.asList(record.get("panels").split(",")));
-      this.versions = new TreeSet<>(Arrays.asList(record.get("version").split(",")));
+    public void addVersions(String versions) {
+      this.versions.addAll(toList(versions));
+    }
+
+    private List<String> toList(String items) {
+      if (StringUtils.isNotBlank(items)) {
+        return Arrays.stream(items.split(ITEMS_SEPARATOR)).filter(StringUtils::isNotBlank).map(StringUtils::trim).toList();
+      }
+      return List.of();
     }
   }
 }
