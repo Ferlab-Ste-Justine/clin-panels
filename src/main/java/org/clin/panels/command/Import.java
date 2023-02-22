@@ -2,7 +2,6 @@ package org.clin.panels.command;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.clin.panels.Parser;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -13,11 +12,11 @@ import java.util.concurrent.Callable;
 @Command(name = "Import", description = "Import from S3 the input Excel file and convert it into panels.tsv")
 public class Import implements Callable<Integer> {
 
-  @Option(names = {"-f", "--file"}, description = "Input Excel file to import", required = true)
+  @Option(names = {"-f", "--file"}, description = "Input Excel panels file to import", required = true)
   private String file;
 
-  @Option(names = {"-v", "--validate"}, description = "Validate the input Excel file only (write nothing to S3)")
-  private boolean validate = false;
+  @Option(names = {"--dryrun"}, description = "Validate the input Excel file only (write nothing to S3)")
+  private boolean dryRun = false;
 
   @Option(names = {"-d", "--debug"}, description = "Enable debug logs")
   private boolean debug = false;
@@ -49,21 +48,18 @@ public class Import implements Callable<Integer> {
         log.info("Validation summary:\n\n{}", validation.buildSummary());
       }
 
-      if (validate) {
-        log.info("Validation succeed");
-      } else {
+      if (!dryRun) {
         var length = new PublishBuilder(s3Client, config, validation.getTimestamp(), excel)
           .copyToDatalake()
           .releasePublic()
           .build();
-        log.info("Panels uploaded to S3 size: {}", FileUtils.byteCountToDisplaySize(length));
+        log.info("Panels published to S3 size: {}", FileUtils.byteCountToDisplaySize(length));
       }
-
-      return 0;
     } catch (Exception e) {
       log.error("Failed to import", e);
       return 1;
     }
+    return 0;
   }
 
   public static void main(String[] args){

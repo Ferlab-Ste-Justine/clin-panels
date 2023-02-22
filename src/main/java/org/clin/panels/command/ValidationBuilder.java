@@ -25,6 +25,7 @@ public class ValidationBuilder {
   public ValidationBuilder extractTimestamp() {
     try {
       this.result.timestamp = file.split("_")[2].replace(".xlsx", "");
+      log.debug("Excel timestamp is: {}", this.result.timestamp);
     } catch (Exception e) {
       this.addError("Can't extract timestamp from excel file name: %s", file);
     }
@@ -46,14 +47,14 @@ public class ValidationBuilder {
   }
 
   public ValidationBuilder compareWithPreviousModel() throws IOException {
-    if (s3Client.exists(config.getDatalakeBucketName(), config.getPreviousPanelsPath())) {
-      log.debug("Found previous panels in bucket: {} at location: {}", config.getDatalakeBucketName(), config.getPreviousPanelsPath());
-      var previousContent = s3Client.getContent(config.getDatalakeBucketName(), config.getPreviousPanelsPath());
+    if (s3Client.exists(config.getDatalakeBucketName(), config.getDatalakePanelsPath())) {
+      log.debug("Found previous panels in bucket: {} at location: {}", config.getDatalakeBucketName(), config.getDatalakePanelsPath());
+      var previousContent = s3Client.getContent(config.getDatalakeBucketName(), config.getDatalakePanelsPath());
       var previousModel = Parser.load(previousContent);
       this.result.previousModel = previousModel;
       this.compareChanged(previousModel, model);
     } else {
-      log.warn("No previous panels found in bucket: {} at location: {}", config.getDatalakeBucketName(), config.getPreviousPanelsPath());
+      log.warn("No previous panels found in bucket: {} at location: {}", config.getDatalakeBucketName(), config.getDatalakePanelsPath());
     }
     return this;
   }
@@ -115,7 +116,9 @@ public class ValidationBuilder {
     public String buildSummary() {
       final StringBuilder builder = new StringBuilder();
 
-      builder.append(formatSummary(currentModel, "Current")).append("\n");
+      if (currentModel != null) {
+        builder.append(formatSummary(currentModel, "Current")).append("\n");
+      }
 
       if (previousModel != null) {
         builder.append(formatSummary(previousModel, "Previous")).append("\n");

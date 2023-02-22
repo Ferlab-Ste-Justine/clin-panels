@@ -24,25 +24,23 @@ public class ExcelBuilder {
   private final S3Client s3Client;
   private final Configuration config;
   private final String excelFileName;
-
-  private String publicExcelPath;
-  private Model model;
+  private final Excel excel = new Excel();
 
   public ExcelBuilder checkS3FileExists() throws FileNotFoundException {
-    this.publicExcelPath = Paths.get(config.getPublicFolderName(), excelFileName).toString();
-    if (!s3Client.exists(config.getPublicBucketName(), publicExcelPath)) {
-      throw new FileNotFoundException(String.format("Bucket: %s file: %s", config.getPublicBucketName(), publicExcelPath));
+    this.excel.publicExcelPath = Paths.get(config.getPublicFolderName(), excelFileName).toString();
+    if (!s3Client.exists(config.getPublicBucketName(), this.excel.publicExcelPath)) {
+      throw new FileNotFoundException(String.format("Bucket: %s file: %s", config.getPublicBucketName(), this.excel.publicExcelPath));
     }
     return this;
   }
 
   public ExcelBuilder parseS3Content() throws IOException {
-    var s3Content = s3Client.getContent(config.getPublicBucketName(), publicExcelPath);
+    var s3Content = s3Client.getContent(config.getPublicBucketName(), this.excel.publicExcelPath);
     try (var bis = new ByteArrayInputStream(s3Content)) {
       Workbook workbook = new XSSFWorkbook(bis);
       var sheet = workbook.getSheetAt(0);
       var metadata = parseMetadata(sheet);
-      this.model = parseModel(sheet, metadata);
+      this.excel.model = parseModel(sheet, metadata);
     }
     return this;
   }
@@ -96,7 +94,7 @@ public class ExcelBuilder {
   }
 
   public Excel build() {
-    return new Excel(model, publicExcelPath);
+    return this.excel;
   }
 
   private String parseValue(Cell cell) {
@@ -114,9 +112,8 @@ public class ExcelBuilder {
   }
 
   @Getter
-  @RequiredArgsConstructor
   public static class Excel {
-    private final Model model;
-    private final String s3Path;
+    private Model model;
+    private String publicExcelPath;
   }
 }

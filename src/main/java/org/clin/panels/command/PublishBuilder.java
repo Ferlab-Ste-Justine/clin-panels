@@ -24,17 +24,16 @@ public class PublishBuilder {
     var pathWithTimestamp = Paths.get(config.getDatalakeFolderName(), String.format("panels_RQDM_%s.tsv", timestamp)).toString();
 
     s3Client.writeContent(config.getDatalakeBucketName(), pathWithTimestamp, content);
-    s3Client.writeContent(config.getDatalakeBucketName(), config.getPreviousPanelsPath(), content);
+    s3Client.writeContent(config.getDatalakeBucketName(), config.getDatalakePanelsPath(), content);
 
     log.debug("Copy to datalake bucket: {} file: {}", config.getDatalakeBucketName(), pathWithTimestamp);
-    log.debug("Copy to datalake bucket: {} file: {}", config.getDatalakeBucketName(),  config.getPreviousPanelsPath());
+    log.debug("Copy to datalake bucket: {} file: {}", config.getDatalakeBucketName(),  config.getDatalakePanelsPath());
     return this;
   }
 
   public PublishBuilder releasePublic() {
-    var publicPanelsPath = Paths.get(config.getPublicFolderName(), config.getPanelsFileName() + ".xlsx").toString();
-    s3Client.copyObject(config.getPublicBucketName(), excel.getS3Path(), config.getPublicBucketName(), publicPanelsPath);
-    log.debug("Release public bucket: {} file: {}", config.getPublicBucketName(), publicPanelsPath);
+    s3Client.copyObject(config.getPublicBucketName(), excel.getPublicExcelPath(), config.getPublicBucketName(), config.getPublicPanelsPath());
+    log.debug("Release public bucket: {} file: {}", config.getPublicBucketName(), config.getPublicPanelsPath());
     return this;
   }
 

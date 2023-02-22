@@ -16,13 +16,12 @@ public class Configuration {
 
   private final String datalakeBucketName;
   private final String datalakeFolderName;
-
+  private final String datalakePanelsPath;
 
   private final String publicBucketName;
   private final String publicFolderName;
-
   private final String panelsFileName;
-  private final String previousPanelsPath;
+  private final String publicPanelsPath;
 
   private Configuration(Config aws, Config panels) {
     this.aws = aws;
@@ -37,7 +36,9 @@ public class Configuration {
     this.publicFolderName = panels.getString("public-bucket-folder");
 
     this.panelsFileName = panels.getString("file-name");
-    this.previousPanelsPath = Paths.get(datalakeFolderName, panelsFileName + ".tsv").toString();
+
+    this.datalakePanelsPath = Paths.get(datalakeFolderName, panelsFileName + ".tsv").toString();
+    this.publicPanelsPath = Paths.get(publicFolderName, panelsFileName + ".xlsx").toString();
   }
 
   public static Configuration load() {
