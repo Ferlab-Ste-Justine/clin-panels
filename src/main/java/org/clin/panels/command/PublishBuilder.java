@@ -2,7 +2,6 @@ package org.clin.panels.command;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.clin.panels.Model;
 import org.clin.panels.Parser;
 
 import java.nio.file.Paths;
@@ -13,32 +12,33 @@ public class PublishBuilder {
 
   private final S3Client s3Client;
   private final Configuration config;
-  private final String file;
-  private final String content;
+  private final String timestamp;
+  private final ExcelBuilder.Excel excel;
 
-  private String datalakeBucketName;
-  private String datalakeFolderName;
-  private String datalakeFileName;
-  private String timestamp;
+  private String content;
 
-  public PublishBuilder parseConfig() {
-    this.datalakeBucketName = config.getAws().getString("datalake-bucket-name");
-    this.datalakeFolderName = config.getPanels().getString("datalake-bucket-folder");
-    this.datalakeFileName = config.getPanels().getString("datalake-file-name");
-    this.timestamp = file.split("_")[1].replace(".xlsx", "");
+  public PublishBuilder copyToDatalake() {
+
+    this.content = Parser.toTSV(excel.getModel());
+
+    var pathWithTimestamp = Paths.get(config.getDatalakeFolderName(), String.format("panels_RQDM_%s.tsv", timestamp)).toString();
+
+    s3Client.writeContent(config.getDatalakeBucketName(), pathWithTimestamp, content);
+    s3Client.writeContent(config.getDatalakeBucketName(), config.getPreviousPanelsPath(), content);
+
+    log.debug("Copy to datalake bucket: {} file: {}", config.getDatalakeBucketName(), pathWithTimestamp);
+    log.debug("Copy to datalake bucket: {} file: {}", config.getDatalakeBucketName(),  config.getPreviousPanelsPath());
+    return this;
+  }
+
+  public PublishBuilder releasePublic() {
+    var publicPanelsPath = Paths.get(config.getPublicFolderName(), config.getPanelsFileName() + ".xlsx").toString();
+    s3Client.copyObject(config.getPublicBucketName(), excel.getS3Path(), config.getPublicBucketName(), publicPanelsPath);
+    log.debug("Release public bucket: {} file: {}", config.getPublicBucketName(), publicPanelsPath);
     return this;
   }
 
   public int build() {
-
-    var pathWithTimestamp = Paths.get(datalakeFolderName, String.format("panels_%s.tsv", timestamp)).toString();
-    var path = Paths.get(datalakeFolderName, datalakeFileName).toString();
-
-    s3Client.writeContent(datalakeBucketName, pathWithTimestamp, content);
-    s3Client.writeContent(datalakeBucketName, path, content);
-    log.debug("Publish panels bucket: {} file: {}", datalakeBucketName, pathWithTimestamp);
-    log.debug("Publish panels bucket: {} file: {}", datalakeBucketName, path);
-
     return content.length();
   }
 }

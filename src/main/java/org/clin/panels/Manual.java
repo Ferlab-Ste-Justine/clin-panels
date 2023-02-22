@@ -1,5 +1,7 @@
 package org.clin.panels;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.IOException;
 
 @Deprecated
@@ -16,7 +18,7 @@ public class Manual {
   }
 
   private static void generate20230203() throws IOException {
-    var model = Parser.parse("./data/output/panels_20230202.tsv");
+    var model = Parser.load("./data/output/panels_20230202.tsv");
 
     var rgdiPlus = Parser.parse(Parser.TSV, "./data/input/RGDI+.tsv");
     var rgdiV2 = Parser.parse(Parser.TSV, "./data/input/RGDI_v2.tsv");
@@ -32,10 +34,12 @@ public class Manual {
     System.out.println(model.getDistinctPanels());
 
     Parser.write(model, "./data/output/panels_20230203.tsv");
+
+    IOUtils.closeQuietly(rgdiPlus, rgdiV2);
   }
 
   private static void generate20230214() throws IOException {
-    var model = Parser.parse("./data/output/panels_20230203.tsv");
+    var model = Parser.load("./data/output/panels_20230203.tsv");
 
     var polymV1 = Parser.parse(Parser.TSV, "./data/input/POLYM_v1.tsv");
 
@@ -46,5 +50,7 @@ public class Manual {
     System.out.println(model.getDistinctPanels());
 
     Parser.write(model, "./data/output/panels_20230214.tsv");
+
+    IOUtils.closeQuietly(polymV1);
   }
 }

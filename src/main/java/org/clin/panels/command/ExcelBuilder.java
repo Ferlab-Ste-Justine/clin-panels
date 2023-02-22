@@ -1,5 +1,6 @@
 package org.clin.panels.command;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,31 +25,21 @@ public class ExcelBuilder {
   private final Configuration config;
   private final String excelFileName;
 
-  private String publicBucketName;
-  private String publicFolderName;
   private String publicExcelPath;
-
-  private Workbook workbook;
   private Model model;
 
-  public ExcelBuilder parseConfig() {
-    this.publicBucketName = config.getAws().getString("public-bucket-name");
-    this.publicFolderName = config.getPanels().getString("public-bucket-folder");
-    this.publicExcelPath = Paths.get(publicFolderName, excelFileName).toString();
-    return this;
-  }
-
   public ExcelBuilder checkS3FileExists() throws FileNotFoundException {
-    if (!s3Client.exists(publicBucketName, publicExcelPath)) {
-      throw new FileNotFoundException(String.format("Bucket: %s file: %s", publicBucketName, publicExcelPath));
+    this.publicExcelPath = Paths.get(config.getPublicFolderName(), excelFileName).toString();
+    if (!s3Client.exists(config.getPublicBucketName(), publicExcelPath)) {
+      throw new FileNotFoundException(String.format("Bucket: %s file: %s", config.getPublicBucketName(), publicExcelPath));
     }
     return this;
   }
 
   public ExcelBuilder parseS3Content() throws IOException {
-    var s3Content = s3Client.getContent(publicBucketName, publicExcelPath);
+    var s3Content = s3Client.getContent(config.getPublicBucketName(), publicExcelPath);
     try (var bis = new ByteArrayInputStream(s3Content)) {
-      this.workbook = new XSSFWorkbook(bis);
+      Workbook workbook = new XSSFWorkbook(bis);
       var sheet = workbook.getSheetAt(0);
       var metadata = parseMetadata(sheet);
       this.model = parseModel(sheet, metadata);
@@ -60,14 +51,14 @@ public class ExcelBuilder {
     var metadata = new ExcelMetadata();
 
     var panelsRow = sheet.getRow(0);
-    var versionsRow = sheet.getRow(2);
+    var versionsRow = sheet.getRow(3);
 
     for (int i = 0; i < panelsRow.getPhysicalNumberOfCells(); i++) {
       var value = parseValue(panelsRow.getCell(i));
       var version = parseValue(versionsRow.getCell(i));
-      if ("gene".equalsIgnoreCase(value)) {
+      if ("gene".equalsIgnoreCase(value) && i != metadata.symbolIndex) {
         metadata.symbolIndex = i;
-        log.debug("Symbol column found at index: {}", i);
+        log.warn("Symbol column found at index: {}", i);
       } else if (StringUtils.isNoneBlank(value, version) && version.toLowerCase().contains("v")) {
         var previousVersion = metadata.versions.getOrDefault(value, "");
         if (version.compareTo(previousVersion) > 0) {
@@ -84,31 +75,28 @@ public class ExcelBuilder {
   private Model parseModel(Sheet sheet, ExcelMetadata metadata) {
     var model = new Model();
 
-    for (int i = 4; i < sheet.getPhysicalNumberOfRows(); i++) {
+    for (int i = 5; i < sheet.getPhysicalNumberOfRows(); i++) {
       var row = sheet.getRow(i);
-      var symbol = parseValue(row.getCell(metadata.symbolIndex));
-      if (StringUtils.isNotBlank(symbol)) {
-        for (String panel: metadata.panels.keySet()) {
-          var panelIndex = metadata.panels.get(panel);
-          var yes = "Y".equalsIgnoreCase(parseValue(row.getCell(panelIndex)));
-          if (yes) {
-            var version = metadata.versions.get(panel);
-            model.add(symbol, panel, String.format("%s_%s", panel, version));
-            log.debug("Symbol: {} has panel: {} for version: {}", symbol, panel, version);
+      if (row != null) {
+        var symbol = parseValue(row.getCell(metadata.symbolIndex));
+        if (StringUtils.isNotBlank(symbol)) {
+          for (String panel : metadata.panels.keySet()) {
+            var panelIndex = metadata.panels.get(panel);
+            var yes = "Y".equalsIgnoreCase(parseValue(row.getCell(panelIndex)));
+            if (yes) {
+              var version = metadata.versions.get(panel);
+              model.add(symbol, panel, String.format("%s_%s", panel, version));
+              log.debug("Symbol: {} has panel: {} for version: {}", symbol, panel, version);
+            }
           }
         }
       }
     }
-
     return model;
   }
 
-  public ExcelBuilder validate() {
-    return this;
-  }
-
-  public Model build() {
-    return this.model;
+  public Excel build() {
+    return new Excel(model, publicExcelPath);
   }
 
   private String parseValue(Cell cell) {
@@ -120,8 +108,15 @@ public class ExcelBuilder {
   }
 
   public static class ExcelMetadata {
-    private Integer symbolIndex;  // index of the symbol column
+    private Integer symbolIndex = 0;  // index of the symbol column
     private final Map<String, Integer> panels = new HashMap<>(); // panel -> column index
     private final Map<String, String> versions = new HashMap<>(); // panel -> version
+  }
+
+  @Getter
+  @RequiredArgsConstructor
+  public static class Excel {
+    private final Model model;
+    private final String s3Path;
   }
 }

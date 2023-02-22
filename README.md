@@ -8,6 +8,16 @@ Quick tool to compute the panels file while insuring the integrity of symbol/pan
 
 ## Import (from Airflow)
 
+How to run local docker image to validate:
+
+```
+docker-compose up
+docker build -t clin-panels
+docker run --network host clin-panels org.clin.panels.command.Import -f=panels_RQDM_20230221T210806Z.xlsx
+```
+
+**Note: panels_RQDM_20230221T210806Z.xlsx should be available in s3://cqdg-qa-app-public/panels**
+
 ## Manual (deprecated)
 
 Update the `Main.java` main method with the logic you want to implement and then use `deploy.sh` to deploy on S3 the result file ex:

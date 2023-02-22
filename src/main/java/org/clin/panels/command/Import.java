@@ -27,27 +27,37 @@ public class Import implements Callable<Integer> {
     try {
       Logger.setDebug(debug);
 
-      log.info("Start import Excel file: {}", file);
+      log.info("Start import Excel panels file: {}", file);
 
       var config = Configuration.load();
       var s3Client = new S3Client(config.getAws());
 
-      var model = new ExcelBuilder(s3Client, config, file)
-        .parseConfig()
+      var excel = new ExcelBuilder(s3Client, config, file)
         .checkS3FileExists()
         .parseS3Content()
-        .validate()
         .build();
 
-      log.info("Distinct panels: {}", model.getDistinctPanels());
-      log.info("Distinct versions: {}", model.getDistinctVersions());
-
-      var length = new PublishBuilder(s3Client, config, file, Parser.toTSV(model))
-        .parseConfig()
+      var validation = new ValidationBuilder(s3Client, config, file, excel.getModel())
+        .extractTimestamp()
+        .checkModel()
+        .compareWithPreviousModel()
         .build();
 
-      log.info("Panels uploaded to datalake size: {}", FileUtils.byteCountToDisplaySize(length));
-      log.info("Import completed with success");
+      if (validation.hasErrors()) {
+        throw new RuntimeException(String.format("Validation failed:\n\n%s\n", String.join("\n", validation.getErrors())));
+      } else {
+        log.info("Validation summary:\n\n{}", validation.buildSummary());
+      }
+
+      if (validate) {
+        log.info("Validation succeed");
+      } else {
+        var length = new PublishBuilder(s3Client, config, validation.getTimestamp(), excel)
+          .copyToDatalake()
+          .releasePublic()
+          .build();
+        log.info("Panels uploaded to S3 size: {}", FileUtils.byteCountToDisplaySize(length));
+      }
 
       return 0;
     } catch (Exception e) {

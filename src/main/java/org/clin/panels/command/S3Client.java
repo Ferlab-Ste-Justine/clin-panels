@@ -7,10 +7,7 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Configuration;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -51,5 +48,10 @@ public class S3Client {
   public void writeContent(String bucket, String key, String content) {
     var request = PutObjectRequest.builder().bucket(bucket).key(key).build();
     s3Client.putObject(request, RequestBody.fromString(content));
+  }
+
+  public void copyObject(String srcBucket, String srKey, String destBucket, String destKey) {
+    var request = CopyObjectRequest.builder().sourceBucket(srcBucket).sourceKey(srKey).destinationBucket(destBucket).destinationKey(destKey).build();
+    s3Client.copyObject(request);
   }
 }
