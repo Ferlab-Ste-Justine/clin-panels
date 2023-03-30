@@ -32,7 +32,7 @@ RUN $JAVA_HOME/bin/jlink \
     --compress=2 \
     --output minimal
 
-FROM alpine:latest
+FROM alpine:3.17.3
 WORKDIR /app
 ENV JAVA_HOME=/jre
 ENV PATH="$PATH:$JAVA_HOME/bin"
