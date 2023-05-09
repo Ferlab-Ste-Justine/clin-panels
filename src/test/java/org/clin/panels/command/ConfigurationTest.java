@@ -20,8 +20,8 @@ class ConfigurationTest {
 
   @Test
   void shouldComputePaths() {
-    assertEquals("/raw/landing/panels/panels.tsv", config.getDatalakePanelsPath());
-    assertEquals("/panels/panels.xlsx", config.getPublicPanelsPath());
+    assertEquals("raw/landing/panels/panels.tsv", config.getDatalakePanelsPath());
+    assertEquals("panels/panels.xlsx", config.getPublicPanelsPath());
   }
 
 }
