@@ -19,22 +19,22 @@ class PublishBuilderTest {
   @BeforeEach
   void beforeEach() {
     when(excel.getModel()).thenReturn(new Model());
-    when(excel.getPublicExcelPath()).thenReturn("/panels/panels_RQDM_timestamp.xlsx");
+    when(excel.getPublicExcelPath()).thenReturn("panels/panels_RQDM_timestamp.xlsx");
   }
 
   @Test
   void shouldCopyToDatalake(){
     new PublishBuilder(s3Client, configuration, "timestamp", excel)
       .copyToDatalake();
-    verify(s3Client).writeContent(eq("cqgc-qa-app-datalake"), eq("/raw/landing/panels/panels_RQDM_timestamp.tsv"), any());
+    verify(s3Client).writeContent(eq("cqgc-qa-app-datalake"), eq("raw/landing/panels/panels_RQDM_timestamp.tsv"), any());
   }
 
   @Test
   void shouldReleaseToPublic(){
     new PublishBuilder(s3Client, configuration, "timestamp", excel)
       .releasePublic();
-    verify(s3Client).copyObject(eq("cqgc-qa-app-public"), eq("/panels/panels_RQDM_timestamp.xlsx"),
-      eq("cqgc-qa-app-public"), eq("/panels/panels.xlsx"));
+    verify(s3Client).copyObject(eq("cqgc-qa-app-public"), eq("panels/panels_RQDM_timestamp.xlsx"),
+      eq("cqgc-qa-app-public"), eq("panels/panels.xlsx"));
   }
 
 }

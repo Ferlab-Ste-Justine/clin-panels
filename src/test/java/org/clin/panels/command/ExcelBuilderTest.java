@@ -29,7 +29,7 @@ class ExcelBuilderTest {
   void shouldCheckIfExistsInS3() throws FileNotFoundException {
     new ExcelBuilder(s3Client, configuration, "panels_RQDM_timestamp.xlsx")
       .checkS3FileExists();
-    verify(s3Client).exists(eq("cqgc-qa-app-public"), eq("/panels/panels_RQDM_timestamp.xlsx"));
+    verify(s3Client).exists(eq("cqgc-qa-app-public"), eq("panels/panels_RQDM_timestamp.xlsx"));
   }
 
   @Test
